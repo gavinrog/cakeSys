@@ -27,6 +27,9 @@
 // Setup a 'default' cache configuration for use in the application.
 Cache::config('default', array('engine' => 'File'));
 
+//admin routing//
+Configure::write('Routing.prefixes', array('admin'));
+
 /**
  * The settings below can be used to set additional paths to models, views and controllers.
  *
