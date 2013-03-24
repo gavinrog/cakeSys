@@ -3,11 +3,15 @@
 class AdminComponent extends Component {
 
 	public $controller;
+	
 	private $_prefix = 'admin';
+	
 	private $_adminModel;
-	private $_redirext = array(
+	
+	private $_redirect = array(
 		'action' => 'index'
 	);
+	
 	private $_actions = array(
 		'add',
 		'delete',
