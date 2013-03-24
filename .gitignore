@@ -1,6 +1,7 @@
 # User specific & automatically generated files #
 #################################################
 /app/Config/database.php
+/nbproject/
 /app/tmp
 /lib/Cake/Console/Templates/skel/tmp/
 /plugins
@@ -19,3 +20,4 @@
 Icon?
 ehthumbs.db
 Thumbs.db
+/nbproject/private/
