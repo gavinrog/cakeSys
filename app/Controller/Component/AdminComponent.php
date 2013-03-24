@@ -5,11 +5,9 @@ class AdminComponent extends Component {
 	public $controller;
 	private $_prefix = 'admin';
 	private $_adminModel;
-	
 	private $_redirext = array(
 		'action' => 'index'
 	);
-	
 	private $_actions = array(
 		'add',
 		'delete',
@@ -39,20 +37,6 @@ class AdminComponent extends Component {
 
 	private function _admin() {
 
-		$count = count($this->_passedVars);
-		for ($j = 0; $j < $count; $j++) {
-			$var = $this->_passedVars[$j];
-			$this->{$var} = $controller->{$var};
-		}
-
-		$this->redirect = array('action' => 'index');
-
-		$this->modelClass = $this->controller->modelClass;
-		$this->modelKey = $this->controller->modelKey;
-
-		if (!is_object($this->controller->{$this->modelClass})) {
-			throw new MissingModelException($this->modelClass);
-		}
 		$title = Inflector::humanize($this->controller->request->action) . ' :: ' . $this->scaffoldTitle;
 		$modelClass = $this->controller->modelClass;
 		$primaryKey = $this->adminModel->primaryKey;
@@ -64,23 +48,14 @@ class AdminComponent extends Component {
 		$scaffoldFields = array_keys($this->adminModel->schema());
 		$associations = $this->_associations();
 		$this->controller->set(compact(
-						'title_for_layout', 'modelClass', 'primaryKey', 'displayField', 'singularVar', 'pluralVar', 'singularHumanName', 'pluralHumanName', 'scaffoldFields', 'associations'
+						'modelClass', 'primaryKey', 'displayField', 'singularVar', 'pluralVar', 'singularHumanName', 'pluralHumanName', 'scaffoldFields', 'associations'
 				));
 		$this->controller->set('title_for_layout', $title);
-
-		if ($this->controller->viewClass) {
-			$this->controller->viewClass = 'Scaffold';
-		}
-		$this->_validSession = (
-				isset($this->controller->Session) && $this->controller->Session->valid() != false
-				);
-
 		$this->_adminAction();
 	}
 
 	private function _adminAction() {
 		$request = $this->controller->request;
-		//strip out admin prefix
 		$action = str_replace($this->_prefix . '_', '', $request->params['action']);
 		if (in_array($action, $this->_actions)) {
 			switch ($action) {
@@ -115,7 +90,7 @@ class AdminComponent extends Component {
 	}
 
 	private function _adminSave($type) {
-		die($type);
+		
 	}
 
 	private function _adminDelete() {
