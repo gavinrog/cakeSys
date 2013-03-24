@@ -2,16 +2,35 @@
 
 class AdminComponent extends Component {
 
-	public $controller;
+	public $components = array(
+		'Auth' => array(
+			'authenticate' => array(
+				'Admin' => array(
+					'userModel' => 'User',
+					'fields' => array(
+						'username' => 'username',
+						'password' => 'password'
+					)
+				)
+			),
+			'loginAction' => array(
+				'controller' => 'users',
+				'action' => 'login',
+				'admin' => true
+			),
+			'redirectUrl' => array(
+				'action' => 'index'
+			)
+		)
+	);
 	
+	private $_controller;
 	private $_prefix = 'admin';
-	
 	private $_adminModel;
-	
 	private $_redirect = array(
 		'action' => 'index'
 	);
-	
+	private $_request;
 	private $_actions = array(
 		'add',
 		'delete',
@@ -21,47 +40,45 @@ class AdminComponent extends Component {
 	);
 
 	public function initialize(Controller &$controller) {
-		$this->controller = $controller;
-		if (!empty($controller->modelClass)) {
-			$this->adminModel = $controller->{$controller->modelClass};
-			foreach ($this->adminModel->Behaviors->enabled() as $behavior) {
-				switch ($behavior) {
-					case 'Tree' :
-						$this->_actions[] = 'move_up';
-						$this->_actions[] = 'move_down';
-						break;
+		$this->_controller = $controller;
+		$this->_request = $controller->request;
+		if ($this->isAdmin()) {
+			if (!empty($controller->modelClass)) {
+				$this->_adminModel = $controller->{$controller->modelClass};
+				foreach ($this->_adminModel->Behaviors->enabled() as $behavior) {
+					switch ($behavior) {
+						case 'Tree' :
+							$this->_actions[] = 'move_up';
+							$this->_actions[] = 'move_down';
+							break;
+					}
 				}
 			}
-			if ($this->isAdmin()) {
-				$this->controller->viewClass = 'Admin';
-				$this->_admin();
-			}
+			$this->_admin();
 		}
 	}
 
 	private function _admin() {
+		$this->_controller->set(array(
+			'title_for_layout' => Inflector::humanize($this->_request->action),
+			'modelClass' => $this->_controller->modelClass,
+			'primaryKey' => $this->_adminModel->primaryKey,
+			'displayField' => $this->_adminModel->displayField,
+			'singularVar' => Inflector::variable($this->_controller->modelClass),
+			'pluralVar' => Inflector::variable($this->_controller->name),
+			'singularHumanName' => Inflector::humanize($this->_controller->modelClass),
+			'pluralHumanName' => Inflector::humanize($this->_controller->name),
+			'scaffoldFields' => array_keys($this->_adminModel->schema()),
+			'associations' => $this->_associations()
+		));
 
-		$title = Inflector::humanize($this->controller->request->action) . ' :: ' . $this->scaffoldTitle;
-		$modelClass = $this->controller->modelClass;
-		$primaryKey = $this->adminModel->primaryKey;
-		$displayField = $this->adminModel->displayField;
-		$singularVar = Inflector::variable($modelClass);
-		$pluralVar = Inflector::variable($this->controller->name);
-		$singularHumanName = Inflector::humanize(Inflector::underscore($modelClass));
-		$pluralHumanName = Inflector::humanize(Inflector::underscore($this->controller->name));
-		$scaffoldFields = array_keys($this->adminModel->schema());
-		$associations = $this->_associations();
-		$this->controller->set(compact(
-						'modelClass', 'primaryKey', 'displayField', 'singularVar', 'pluralVar', 'singularHumanName', 'pluralHumanName', 'scaffoldFields', 'associations'
-				));
-		$this->controller->set('title_for_layout', $title);
 		$this->_adminAction();
 	}
 
 	private function _adminAction() {
-		$request = $this->controller->request;
-		$action = str_replace($this->_prefix . '_', '', $request->params['action']);
+		$action = str_replace($this->_prefix . '_', '', $this->_request->params['action']);
 		if (in_array($action, $this->_actions)) {
+			$this->_controller->viewClass = 'Admin';
 			switch ($action) {
 				case 'add':
 				case 'edit' :
@@ -79,8 +96,8 @@ class AdminComponent extends Component {
 			}
 		} else {
 			throw new MissingActionException(array(
-				'controller' => $this->controller->name,
-				'action' => $request->action
+				'controller' => $this->_controller->name,
+				'action' => $this->_request->action
 			));
 		}
 	}
@@ -102,8 +119,8 @@ class AdminComponent extends Component {
 	}
 
 	public function isAdmin() {
-		if (!empty($this->controller->params[$this->_prefix])) {
-			return $this->controller->params[$this->_prefix];
+		if (!empty($this->_controller->params[$this->_prefix])) {
+			return $this->_controller->params[$this->_prefix];
 		}
 		return false;
 	}
@@ -111,14 +128,13 @@ class AdminComponent extends Component {
 	private function _associations() {
 		$keys = array('belongsTo', 'hasOne', 'hasMany', 'hasAndBelongsToMany');
 		$associations = array();
-
 		foreach ($keys as $key => $type) {
-			foreach ($this->adminModel->{$type} as $assocKey => $assocData) {
+			foreach ($this->_adminModel->{$type} as $assocKey => $assocData) {
 				$associations[$type][$assocKey]['primaryKey'] =
-						$this->adminModel->{$assocKey}->primaryKey;
+						$this->_adminModel->{$assocKey}->primaryKey;
 
 				$associations[$type][$assocKey]['displayField'] =
-						$this->adminModel->{$assocKey}->displayField;
+						$this->_adminModel->{$assocKey}->displayField;
 
 				$associations[$type][$assocKey]['foreignKey'] =
 						$assocData['foreignKey'];
