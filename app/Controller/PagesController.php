@@ -1,9 +1,8 @@
 <?php
 
-App::uses('SystemController','Controller');
+App::uses('AppController','Controller');
 
-class PagesController extends SystemController{
-	
+class PagesController extends AppController{
 	
 
 }

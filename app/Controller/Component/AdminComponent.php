@@ -1,28 +1,6 @@
 <?php
 
 class AdminComponent extends Component {
-
-	public $components = array(
-		'Auth' => array(
-			'authenticate' => array(
-				'Admin' => array(
-					'userModel' => 'User',
-					'fields' => array(
-						'username' => 'username',
-						'password' => 'password'
-					)
-				)
-			),
-			'loginAction' => array(
-				'controller' => 'users',
-				'action' => 'login',
-				'admin' => true
-			),
-			'redirectUrl' => array(
-				'action' => 'index'
-			)
-		)
-	);
 	
 	private $_controller;
 	private $_prefix = 'admin';
@@ -43,6 +21,8 @@ class AdminComponent extends Component {
 		$this->_controller = $controller;
 		$this->_request = $controller->request;
 		if ($this->isAdmin()) {
+			//sets scaffold to true for auth component startup checks//
+			$this->_controller->scaffold = true;
 			if (!empty($controller->modelClass)) {
 				$this->_adminModel = $controller->{$controller->modelClass};
 				foreach ($this->_adminModel->Behaviors->enabled() as $behavior) {
