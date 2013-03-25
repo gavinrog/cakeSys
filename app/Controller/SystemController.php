@@ -10,13 +10,7 @@ class SystemController extends Controller {
 			),
 			'authorize' => array(
 				'Controller'
-			),
-			'loginAction' => array(
-				'controller' => 'users',
-				'action' => 'login',
-				'admin' => false
-			),
-			'logoutUrl' => '/'
+			)
 		),
 		'Session'
 	);
@@ -26,11 +20,11 @@ class SystemController extends Controller {
 		parent::__construct($request, $response);
 	}
 	
-	public function beforeRender(){
+	public function beforeFilter(){
 		$this->Auth->loginAction = array(
 			'controller' => 'users',
-			'action' => 'loginf',
-			'admin' => false
+			'action' => 'login',
+			'admin' => $this->Admin->isAdmin()
 		);
 	}
 
