@@ -3,29 +3,18 @@
 class SystemController extends Controller {
 
 	public $components = array(
-		'Admin',
-		'Auth' => array(
-			'authenticate' => array(
-				'Form'
-			),
-			'authorize' => array(
-				'Controller'
-			)
-		),
 		'Session'
 	);
 	public $viewClass = 'System';
+	public $_pseudoActions = array();
 
 	public function __construct($request = null, $response = null) {
+
+		if (isset($request->params['admin'])) {
+			$this->components[] = 'Admin';
+		}
+
 		parent::__construct($request, $response);
-	}
-	
-	public function beforeFilter(){
-		$this->Auth->loginAction = array(
-			'controller' => 'users',
-			'action' => 'login',
-			'admin' => $this->Admin->isAdmin()
-		);
 	}
 
 	public function isAuthorized() {
@@ -36,10 +25,19 @@ class SystemController extends Controller {
 		try {
 			parent::invokeAction($request);
 		} catch (Exception $e) {
-			if ($this->Admin->isAdmin()) {
-				return true;
+			if (isset($this->_pseudoActions[$request->params['action']])) {
+				$action = $this->_pseudoActions[$request->params['action']];
+				$args = $action['args'];
+				return call_user_func_array($action['method'], $args);
 			}
 			throw $e;
+		}
+	}
+
+	public function addPseudoAction($name, $method, $args = array()) {
+		if (is_callable($method)) {
+			$this->_pseudoActions[$name] = compact('method', 'args');
+			return true;
 		}
 	}
 

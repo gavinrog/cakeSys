@@ -1,7 +1,7 @@
 <?php
 
 class AdminComponent extends Component {
-	
+
 	private $_controller;
 	private $_prefix = 'admin';
 	private $_adminModel;
@@ -10,35 +10,35 @@ class AdminComponent extends Component {
 	);
 	private $_request;
 	private $_actions = array(
+		'login',
 		'add',
 		'delete',
 		'edit',
 		'index',
-		'view'
+		'view',
 	);
 
 	public function initialize(Controller &$controller) {
 		$this->_controller = $controller;
 		$this->_request = $controller->request;
-		if ($this->isAdmin()) {
-			//sets scaffold to true for auth component startup checks//
-			$this->_controller->scaffold = true;
-			if (!empty($controller->modelClass)) {
-				$this->_adminModel = $controller->{$controller->modelClass};
-				foreach ($this->_adminModel->Behaviors->enabled() as $behavior) {
-					switch ($behavior) {
-						case 'Tree' :
-							$this->_actions[] = 'move_up';
-							$this->_actions[] = 'move_down';
-							break;
-					}
+		if (!empty($controller->modelClass)) {
+			$this->_adminModel = $controller->{$controller->modelClass};
+			foreach ($this->_adminModel->Behaviors->enabled() as $behavior) {
+				switch ($behavior) {
+					case 'Tree' :
+						$this->_actions[] = 'move_up';
+						$this->_actions[] = 'move_down';
+						break;
 				}
 			}
-			$this->_admin();
 		}
+		$this->_addControllerActions();
+		$this->_admin();
 	}
 
 	private function _admin() {
+
+		$this->_controller->viewClass = 'Admin';
 		$this->_controller->set(array(
 			'title_for_layout' => Inflector::humanize($this->_request->action),
 			'modelClass' => $this->_controller->modelClass,
@@ -50,59 +50,51 @@ class AdminComponent extends Component {
 			'pluralHumanName' => Inflector::humanize($this->_controller->name),
 			'scaffoldFields' => array_keys($this->_adminModel->schema()),
 			'associations' => $this->_associations()
-		));
-
-		$this->_adminAction();
+				)
+		);
 	}
 
-	private function _adminAction() {
-		$action = str_replace($this->_prefix . '_', '', $this->_request->params['action']);
-		if (in_array($action, $this->_actions)) {
-			$this->_controller->viewClass = 'Admin';
+	private function _addControllerActions() {
+		foreach ($this->_actions as $action) {
 			switch ($action) {
-				case 'add':
-				case 'edit' :
-					$this->_adminSave($action);
+				case 'add' :
+				case 'edit':
+					$this->_controller->addPseudoAction($this->_prefix . '_' . $action, array($this, Inflector::variable($this->_prefix . '_' . 'save')), array($action));
 					break;
-				case 'delete':
-					$this->_adminDelete();
-					break;
-				case 'index' :
-					$this->_adminIndex();
-					break;
-				case 'view' :
-					$this->_adminView();
+				default:
+					$this->_controller->addPseudoAction($this->_prefix . '_' . $action, array($this, Inflector::variable($this->_prefix . '_' . 'save')));
 					break;
 			}
+		}
+	}
+
+	public function adminLogin() {
+		
+	}
+
+	public function adminIndex() {
+		$pages = $this->_adminModel->find('all');
+		$this->_controller->set(compact('pages'));
+	}
+
+	public function adminView() {
+		
+	}
+
+	public function adminSave($type) {
+		if ($type == 'edit') {
+			$this->_adminModel->id = $this->_controller->request->params['pass'][0];
+			if (!$data = $this->_adminModel->read()) {
+				
+			}
+			$this->_controller->data = $data;
 		} else {
-			throw new MissingActionException(array(
-				'controller' => $this->_controller->name,
-				'action' => $this->_request->action
-			));
+			$this->_adminModel->create();
 		}
 	}
 
-	private function _adminIndex() {
+	public function adminDelete() {
 		
-	}
-
-	private function _adminView() {
-		
-	}
-
-	private function _adminSave($type) {
-		
-	}
-
-	private function _adminDelete() {
-		
-	}
-
-	public function isAdmin() {
-		if (!empty($this->_controller->params[$this->_prefix])) {
-			return $this->_controller->params[$this->_prefix];
-		}
-		return false;
 	}
 
 	private function _associations() {

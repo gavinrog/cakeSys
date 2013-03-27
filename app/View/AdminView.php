@@ -5,6 +5,7 @@ App::uses('SystemView', 'View');
 class AdminView extends SystemView {
 
 	protected function _getViewFileName($name = null) {
+				
 		if ($name === null) {
 			$name = $this->action;
 		}
@@ -49,11 +50,11 @@ class AdminView extends SystemView {
 				}
 			}
 		}
-		
+
 		if ($name === 'Scaffolds' . DS . $subDir . 'error') {
 			return CAKE . 'View' . DS . 'Errors' . DS . 'scaffold_error.ctp';
 		}
-		
+
 		throw new MissingViewException($paths[0] . $name . $this->ext);
 	}
 
